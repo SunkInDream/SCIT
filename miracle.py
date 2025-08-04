@@ -21,9 +21,9 @@ class MIRACLE(nn.Module):
         np.random.seed(seed)
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-        # ✅ Fix: compute total input dimension correctly
+        # Fix: compute total input dimension correctly
         self.original_features = num_inputs
-        self.missing_list = missing_list  # ✅ keep missing_list
+        self.missing_list = missing_list  #  keep missing_list
         self.missing_features = len(missing_list)
         # original features + missing indicators
         self.total_input_dim = num_inputs + len(missing_list)
@@ -31,7 +31,7 @@ class MIRACLE(nn.Module):
         self.max_steps = max_steps
         self.window = window
 
-        # ✅ Fix: build networks with the correct input dimension
+        #  Fix: build networks with the correct input dimension
         self.networks = nn.ModuleList(
             [
                 nn.Sequential(
@@ -60,7 +60,7 @@ class MIRACLE(nn.Module):
         X = X_miss.copy()
         X_mask = (~np.isnan(X)).astype(np.float32)
 
-        # ✅ Fix: ensure shape consistency
+        #  Fix: ensure shape consistency
         seq_len, n_features = X.shape
         assert (
             n_features == self.original_features
@@ -88,11 +88,11 @@ class MIRACLE(nn.Module):
         else:
             indicators = np.zeros((seq_len, 0), dtype=np.float32)
 
-        # ✅ Fix: ensure concatenation along the correct dimension
+        #  Fix: ensure concatenation along the correct dimension
         X_all = np.concatenate([X, indicators], axis=1)  # (seq_len, original + indicators)
         X_mask_all = np.concatenate([X_mask, np.ones_like(indicators)], axis=1)
 
-        # ✅ Validate dimension
+        #  Validate dimension
         assert (
             X_all.shape[1] == self.total_input_dim
         ), f"Post-concat dim ({X_all.shape[1]}) does not match expected ({self.total_input_dim})"
@@ -103,7 +103,7 @@ class MIRACLE(nn.Module):
             # Use moving average of recent predictions to refine inputs
             if step >= self.window and len(avg_preds) >= self.window:
                 X_pred = np.mean(np.stack(avg_preds), axis=0)
-                # ✅ Update only the original features based on mask
+                #  Update only the original features based on mask
                 X = X * X_mask + X_pred * (1 - X_mask)
                 X_all = np.concatenate([X, indicators], axis=1)
 
@@ -113,7 +113,7 @@ class MIRACLE(nn.Module):
 
             pred = self(xt)  # (seq_len, original_features)
 
-            # ✅ Fix: compute loss only over original features, but match xt by
+            #  Fix: compute loss only over original features, but match xt by
             # concatenating the (constant) indicators for comparison
             indicators_tensor = torch.tensor(
                 indicators, dtype=torch.float32, device=self.device

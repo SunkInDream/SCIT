@@ -29,7 +29,7 @@ def set_seed(seed=42):
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
     os.environ["PYTHONHASHSEED"] = str(seed)
-    print(f"🎲 Set random seed: {seed}")
+    print(f" Set random seed: {seed}")
 
 
 class SimpleLSTMClassifier(nn.Module):
@@ -506,7 +506,7 @@ def evaluate_downstream(
     ]
 
     for method_name, data_func in tqdm(methods, desc="Evaluating imputation methods"):
-        print(f"\n🔄 Evaluating {method_name} ...")
+        print(f"\n Evaluating {method_name} ...")
         try:
             set_seed(seed)
             data_arr_method, label_arr_method = data_func()
@@ -514,9 +514,9 @@ def evaluate_downstream(
                 data_arr_method, label_arr_method, k=k, epochs=epochs, lr=lr, seed=seed
             )
             results[method_name] = accs
-            print(f"✅ {method_name} completed. Results: {accs}")
+            print(f" {method_name} completed. Results: {accs}")
         except Exception as e:
-            print(f"❌ {method_name} failed: {e}")
+            print(f" {method_name} failed: {e}")
             continue
 
     table = []

@@ -54,7 +54,7 @@ def set_seed_all(seed=42):
     # Set Python hash seed
     os.environ["PYTHONHASHSEED"] = str(seed)
 
-    print(f"🎲 Set global random seed: {seed}")
+    print(f" Set global random seed: {seed}")
 
 
 def wait_for_gpu_free(threshold_mb=500, sleep_time=10):
@@ -62,7 +62,7 @@ def wait_for_gpu_free(threshold_mb=500, sleep_time=10):
     Wait until the memory usage of all GPUs is below the threshold (MiB), then return.
     By default, wait until all GPUs use less than 500 MiB.
     """
-    print(f"⏳ Waiting for GPUs to be free (memory used < {threshold_mb} MiB)...")
+    print(f" Waiting for GPUs to be free (memory used < {threshold_mb} MiB)...")
     while True:
         try:
             output = subprocess.check_output(
@@ -70,10 +70,10 @@ def wait_for_gpu_free(threshold_mb=500, sleep_time=10):
             )
             used_memory = [int(x) for x in output.decode().strip().split("\n")]
             if all(mem < threshold_mb for mem in used_memory):
-                print("✅ All GPUs are free; starting miracle_impu.")
+                print(" All GPUs are free; starting miracle_impu.")
                 break
             else:
-                print(f"🚧 Current VRAM usage: {used_memory} MiB, not low enough; waiting {sleep_time}s...")
+                print(f" Current VRAM usage: {used_memory} MiB, not low enough; waiting {sleep_time}s...")
                 time.sleep(sleep_time)
         except Exception as e:
             print(f"Failed to check GPU memory: {e}")
@@ -132,7 +132,7 @@ def SecondProcess(matrix, perturbation_prob=0.3, perturbation_scale=0.3):
 
         matrix[:, col_idx] = interpolated
 
-    return matrix.astype(np.float32)  # ✅ Fix: move this outside the loop
+    return matrix.astype(np.float32)  #  Fix: move this outside the loop
 
 
 def initial_process(matrix, threshold=0.8, perturbation_prob=0.1, perturbation_scale=0.1):
@@ -154,7 +154,7 @@ def impute(
     seed=42,
 ):
     """Add seed parameter."""
-    # ✅ Set seed to ensure reproducible training
+    #  Set seed to ensure reproducible training
     set_seed_all(seed)
 
     device = torch.device(f"cuda:{gpu_id}" if gpu_id is not None and torch.cuda.is_available() else "cpu")
@@ -181,7 +181,7 @@ def impute(
     y = torch.tensor(initial_filled_scaled[None, ...], dtype=torch.float32, device=device)
     m = torch.tensor(mask[None, ...], dtype=torch.float32, device=device)
 
-    # ✅ Set seed again before creating model
+    #  Set seed again before creating model
     set_seed_all(seed)
     if ablation == 1:
         ablation_causal = causal_matrix.copy()
@@ -199,7 +199,7 @@ def impute(
         except:
             pass
 
-    # ✅ Set seed before optimizer init
+    #  Set seed before optimizer init
     set_seed_all(seed)
     opt = torch.optim.Adam(model.parameters(), lr=lr)
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(opt, T_max=epochs, eta_min=lr * 0.01)
@@ -220,14 +220,14 @@ def impute(
     for epoch in range(epochs):
         opt.zero_grad()
 
-        if grad_scaler:  # ✅ Use grad_scaler
+        if grad_scaler:  #  Use grad_scaler
             with torch.cuda.amp.autocast():
                 pred = model(x)
 
                 # Loss1: prediction error at observed entries
                 loss_1 = F.mse_loss(pred * m, y * m)
 
-                # ✅ Ensure pred is float32 for statistical computations
+                #  Ensure pred is float32 for statistical computations
                 pred_float = pred.float()
 
                 pred_mean = pred_float.mean(dim=1, keepdim=True)
@@ -236,7 +236,7 @@ def impute(
                 mean_loss = F.mse_loss(pred_mean, y_mean)
                 std_loss = F.mse_loss(pred_std, y_std)
 
-                # ✅ Use float32 for quantiles
+                #  Use float32 for quantiles
                 quantile_losses = []
                 for i, q in enumerate(quantiles):
                     pred_q = torch.quantile(pred_float, q, dim=1, keepdim=True)
@@ -245,18 +245,18 @@ def impute(
                 loss_3 = (mean_loss + std_loss + sum(quantile_losses)) / (2 + len(quantiles))
                 total_loss = 0.6 * loss_1 + 0.4 * loss_3
 
-            grad_scaler.scale(total_loss).backward()  # ✅ Use grad_scaler
-            grad_scaler.unscale_(opt)  # ✅ Use grad_scaler
+            grad_scaler.scale(total_loss).backward()  #  Use grad_scaler
+            grad_scaler.unscale_(opt)  #  Use grad_scaler
             torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
-            grad_scaler.step(opt)  # ✅ Use grad_scaler
-            grad_scaler.update()  # ✅ Use grad_scaler
+            grad_scaler.step(opt)  #  Use grad_scaler
+            grad_scaler.update()  #  Use grad_scaler
         else:
             # Standard training
             pred = model(x)
 
             loss_1 = F.mse_loss(pred * m, y * m)
 
-            # ✅ Ensure pred is float32
+            #  Ensure pred is float32
             pred_float = pred.float()
 
             pred_mean = pred_float.mean(dim=1, keepdim=True)
@@ -267,7 +267,7 @@ def impute(
 
             quantile_losses = []
             for i, q in enumerate(quantiles):
-                pred_q = torch.quantile(pred_float, q, dim=1, keepdim=True)  # ✅ use float
+                pred_q = torch.quantile(pred_float, q, dim=1, keepdim=True)  #  use float
                 quantile_losses.append(F.mse_loss(pred_q, y_quantiles[i]))
 
             loss_3 = (mean_loss + std_loss + sum(quantile_losses)) / (2 + len(quantiles))
@@ -285,7 +285,7 @@ def impute(
             best_loss = current_loss
             no_improve_count = 0
             with torch.no_grad():
-                best_imputed = model(x).float().cpu().squeeze(0).numpy()  # ✅ ensure float32 conversion
+                best_imputed = model(x).float().cpu().squeeze(0).numpy()  #  ensure float32 conversion
         else:
             no_improve_count += 1
             if no_improve_count >= patience:
@@ -302,7 +302,7 @@ def impute(
     # Fill missing with best result and inverse-scale
     res = initial_filled.copy()
     if best_imputed is not None:
-        best_imputed_rescaled = scaler.inverse_transform(best_imputed)  # ✅ inverse transform
+        best_imputed_rescaled = scaler.inverse_transform(best_imputed)  #  inverse transform
         res[mask == 0] = best_imputed_rescaled[mask == 0]
 
     pd.DataFrame(res).to_csv("result_1.csv", index=False)
@@ -315,7 +315,7 @@ def impute_wrapper(args):
     import torch
     import os
 
-    # ✅ Unpack the new skip_existing parameter
+    #  Unpack the new skip_existing parameter
     if len(args) == 11:  # New version has 10 parameters after idx
         idx, mx, file_path, causal_matrix, gpu_id, output_dir, model_params, epochs, lr, skip_existing = args
     else:  # Backward compatibility (9 parameters after idx)
@@ -329,13 +329,13 @@ def impute_wrapper(args):
         device = torch.device("cpu")
 
     try:
-        # ✅ Build output file path
+        #  Build output file path
         filename = os.path.basename(file_path).replace(".csv", "_imputed.csv")
         save_path = os.path.join(output_dir, filename)
 
-        # ✅ Double-check skip logic at worker level
+        #  Double-check skip logic at worker level
         if skip_existing and os.path.exists(save_path):
-            print(f"⏩ Skipping existing file at worker level: {filename}")
+            print(f" Skipping existing file at worker level: {filename}")
             return idx, save_path
 
         # Run imputation
@@ -350,11 +350,11 @@ def impute_wrapper(args):
         # Save result
         pd.DataFrame(imputed_result).to_csv(save_path, index=False)
 
-        print(f"✅ Imputation complete: {os.path.basename(file_path)} → {filename}")
+        print(f" Imputation complete: {os.path.basename(file_path)} → {filename}")
         return idx, save_path
 
     except Exception as e:
-        print(f"❌ Imputation failed: {os.path.basename(file_path)}, error: {e}")
+        print(f" Imputation failed: {os.path.basename(file_path)}, error: {e}")
         return idx, f"Error: {e}"
 
 
@@ -366,7 +366,7 @@ def parallel_impute(
     lr=0.02,
     simultaneous_per_gpu=2,
     output_dir="imputed_results",
-    skip_existing=False,  # ✅ new: whether to skip files that already exist
+    skip_existing=False,  #  new: whether to skip files that already exist
 ):
     num_gpus = torch.cuda.device_count()
     if num_gpus == 0:
@@ -380,13 +380,13 @@ def parallel_impute(
         f"total processes: {num_gpus * simultaneous_per_gpu}"
     )
 
-    # ✅ Get file list
+    #  Get file list
     file_list = [os.path.join(file_paths, f) for f in os.listdir(file_paths) if f.endswith(".csv")]
     print(f"[INFO] Found {len(file_list)} file(s) to process")
 
-    # ✅ Skip logic
+    #  Skip logic
     if skip_existing:
-        print(f"🔍 Skip-existing mode ON; checking output directory: {output_dir}")
+        print(f" Skip-existing mode ON; checking output directory: {output_dir}")
         existing_files = set(os.listdir(output_dir)) if os.path.exists(output_dir) else set()
 
         # Filter files to process
@@ -397,15 +397,15 @@ def parallel_impute(
             filename = os.path.basename(file_path)
             if filename in existing_files:
                 skipped_count += 1
-                print(f"⏩ Skip existing file: {filename}")
+                print(f" Skip existing file: {filename}")
             else:
                 filtered_file_list.append(file_path)
 
         file_list = filtered_file_list
-        print(f"📊 Skip stats: {skipped_count} skipped, {len(file_list)} to process")
+        print(f" Skip stats: {skipped_count} skipped, {len(file_list)} to process")
 
         if len(file_list) == 0:
-            print("✅ All files already exist; nothing to do")
+            print("All files already exist; nothing to do")
             return {}
 
     args_list = []
@@ -413,7 +413,7 @@ def parallel_impute(
         df = pd.read_csv(file_path)
         data = df.values.astype(np.float32)
         gpu_id = idx % num_gpus
-        # ✅ Pass skip_existing to worker
+        #  Pass skip_existing to worker
         args_list.append(
             (idx, data, file_path, causal_matrix, gpu_id, output_dir, model_params, epochs, lr, skip_existing)
         )
@@ -521,7 +521,7 @@ def causal_discovery(
 # ================================
 def mse_evaluate_single_file(mx, causal_matrix, gpu_id=0, device=None, met="lorenz", missing="mar", seed=42, ablation=0):
     """Add seed parameter to control randomness."""
-    # ✅ Reset seed for each call to make the missingness process reproducible
+    #  Reset seed for each call to make the missingness process reproducible
     set_seed_all(seed)
 
     if device is None:
@@ -532,9 +532,9 @@ def mse_evaluate_single_file(mx, causal_matrix, gpu_id=0, device=None, met="lore
     gt2 = gt.copy()
     pd.DataFrame(gt).to_csv("gt_matrix.csv", index=False)  # rename to avoid conflicts
 
-    # ✅ Missingness generation — run immediately after seeding
+    # Missingness generation — run immediately after seeding
     try:
-        print(f"🔍 Starting missingness generation (seed={seed})...")
+        print(f" Starting missingness generation (seed={seed})...")
         # Seed again to ensure mar_logistic determinism
         set_seed_all(seed)
         if missing == "mar":
@@ -553,10 +553,10 @@ def mse_evaluate_single_file(mx, causal_matrix, gpu_id=0, device=None, met="lore
             X = mcar(X, p=0.5)
             X = X.squeeze(0)
         pre_checkee(X, met)
-        print(f"✅ Missingness generated, missing rate: {np.isnan(X).sum() / X.size:.2%}")
+        print(f" Missingness generated, missing rate: {np.isnan(X).sum() / X.size:.2%}")
 
     except (ValueError, RuntimeError) as e:
-        print(f"⚠️ mar_logistic failed, skipping this file: {e}")
+        print(f" mar_logistic failed, skipping this file: {e}")
         return None
 
     pd.DataFrame(X).to_csv("missing_matrix.csv", index=False)
@@ -582,7 +582,7 @@ def mse_evaluate_single_file(mx, causal_matrix, gpu_id=0, device=None, met="lore
 
     res = {}
 
-    # ✅ Our model evaluation — pass seed
+    #  Our model evaluation — pass seed
     print("Starting my_model...")
     set_seed_all(seed)  # Ensure model training is deterministic as well
     imputed_result, mask, initial_processed = impute(
@@ -603,7 +603,7 @@ def mse_evaluate_single_file(mx, causal_matrix, gpu_id=0, device=None, met="lore
     def is_reasonable_mse(mse_value, threshold=1_000_000.0):
         return (not np.isnan(mse_value)) and (not np.isinf(mse_value)) and (0 <= mse_value <= threshold)
 
-    # ✅ Baselines — set seed before each method
+    #  Baselines — set seed before each method
     baseline = [
         # ("initial_process", initial_process),
         ("zero_impu", zero_impu),
@@ -626,7 +626,7 @@ def mse_evaluate_single_file(mx, causal_matrix, gpu_id=0, device=None, met="lore
     for name, fn in baseline:
         print(f"Running {name}...")
 
-        # ✅ Set the same seed before each baseline
+        #  Set the same seed before each baseline
         set_seed_all(seed)
 
         try:
@@ -635,18 +635,18 @@ def mse_evaluate_single_file(mx, causal_matrix, gpu_id=0, device=None, met="lore
                 torch.cuda.empty_cache()
 
             if np.any(np.abs(result) > 1e6):
-                print(f"❌ {name}: imputed result contains extremely large values (max: {np.max(np.abs(result)):.2e})")
+                print(f" {name}: imputed result contains extremely large values (max: {np.max(np.abs(result)):.2e})")
                 res[name] = float("nan")
             else:
                 mse_value = mse(result, gt, Mask)
                 if is_reasonable_mse(mse_value):
                     res[name] = mse_value
-                    print(f"✅ {name}: {mse_value:.6f}")
+                    print(f" {name}: {mse_value:.6f}")
                 else:
-                    print(f"❌ {name}: abnormal MSE ({mse_value:.2e})")
+                    print(f" {name}: abnormal MSE ({mse_value:.2e})")
                     res[name] = float("nan")
         except Exception as e:
-            print(f"❌ {name} failed: {e}")
+            print(f" {name} failed: {e}")
             res[name] = float("nan")
 
         if device.type == "cuda":
@@ -665,9 +665,9 @@ def worker_wrapper(args):
     import torch
     import os
 
-    idx, mx, causal_matrix, gpu_id, met, missing, seed, ablation = args  # ✅ include seed
+    idx, mx, causal_matrix, gpu_id, met, missing, seed, ablation = args  #  include seed
 
-    # ✅ Set a deterministic seed per worker/sample
+    #  Set a deterministic seed per worker/sample
     set_seed_all(seed + idx)  # each sample uses a different but deterministic seed
 
     print(f"[Worker PID {os.getpid()}] Assigned GPU: {gpu_id}, Seed: {seed + idx}")
@@ -680,7 +680,7 @@ def worker_wrapper(args):
         device = torch.device("cpu")
         print(f"[Worker PID {os.getpid()}] Warning: No GPU detected, using CPU")
 
-    # ✅ Pass seed into evaluation function
+    #  Pass seed into evaluation function
     res = mse_evaluate_single_file(
         mx, causal_matrix, gpu_id=gpu_id, device=device, met=met, missing=missing, seed=seed + idx, ablation=ablation
     )
@@ -692,7 +692,7 @@ def worker_wrapper(args):
 # ================================
 def parallel_mse_evaluate(res_list, causal_matrix, met, simultaneous_per_gpu=3, missing="mar", seed=42, ablation=0):
     """Add seed parameter."""
-    # ✅ Set seed in the main process
+    #  Set seed in the main process
     set_seed_all(seed)
 
     num_gpus = torch.cuda.device_count()
@@ -712,9 +712,9 @@ def parallel_mse_evaluate(res_list, causal_matrix, met, simultaneous_per_gpu=3, 
     print(
         f"[INFO] Using {num_gpus} GPU(s), up to {simultaneous_per_gpu} task(s) per GPU, total processes: {max_workers}"
     )
-    print(f"🎲 Base seed: {seed}")
+    print(f" Base seed: {seed}")
 
-    # ✅ Assign GPU and seed for each task
+    #  Assign GPU and seed for each task
     gpu_ids = [i % num_gpus for i in range(len(res_list))]
     args_list = [
         (i, res_list[i], causal_matrix, gpu_ids[i], met, missing, seed, ablation) for i in range(len(res_list))
@@ -733,12 +733,12 @@ def parallel_mse_evaluate(res_list, causal_matrix, met, simultaneous_per_gpu=3, 
 
         if len(valid_values) > 0:
             avg[k] = float(np.nanmean(values))
-            print(f"📊 {k}: {len(valid_values)}/{len(values)} valid values, mean: {avg[k]:.6f}")
+            print(f" {k}: {len(valid_values)}/{len(values)} valid values, mean: {avg[k]:.6f}")
         else:
             avg[k] = float("nan")
-            print(f"❌ {k}: all values are NaN")
+            print(f" {k}: all values are NaN")
 
-    # ✅ Include seed info when saving
+    #  Include seed info when saving
     pd.DataFrame([{"Method": k, "Average_MSE": v, "Seed": seed} for k, v in avg.items()]).to_csv(
         f"mse_evaluation_results_seed{seed}.csv", index=False
     )

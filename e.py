@@ -63,7 +63,7 @@ def simulate_lorenz_96(p, T, F=10.0, delta_t=0.1, sd=0.1, burn_in=1000, seed=0):
     X = odeint(lorenz, x0, t, args=(F,))
     X += np.random.normal(scale=sd, size=(T + burn_in, p))
 
-    # ✅ Directly return the raw data (after removing burn-in)
+    # Directly return the raw data (after removing burn-in)
     X_final = X[burn_in:, :]
 
     # Set up Granger causality ground truth.
@@ -95,7 +95,7 @@ def save_lorenz_datasets_to_csv(datasets, output_dir):
     for i, (X, GC) in enumerate(datasets):
         X_filename = os.path.join(output_dir, f"lorenz_dataset_{i}_timeseries.csv")
 
-        # ✅ Add column names
+        # Add column names
         col_names = [f"lorenz_{j + 1}" for j in range(X.shape[1])]
         df = pd.DataFrame(X, columns=col_names)
         df.to_csv(X_filename, index=False)
@@ -369,7 +369,7 @@ def regenerate_data_with_same_structure(beta, GC, T, sd, seed):
 
     data = X.T[burn_in:, :]
 
-    # ✅ Directly return the raw data
+    # Directly return the raw data
     return data
 
 
@@ -395,7 +395,7 @@ def generate_fama_french_datasets_with_shared_graph(
     total_vars = num_factors + num_assets
     col_names = [f"F{i}" for i in range(num_factors)] + [f"A{i}" for i in range(num_assets)]
 
-    # ✅ Generate a random causal graph G
+    # Generate a random causal graph G
     G = np.zeros((total_vars, total_vars), dtype=int)
     edge_count = 0
     while edge_count < num_edges:
@@ -405,7 +405,7 @@ def generate_fama_french_datasets_with_shared_graph(
             G[i, j] = 1
             edge_count += 1
 
-    # ✅ Save the causal graph correctly
+    # Save the causal graph correctly
     np.savetxt(graph_save_path, G, delimiter=",", fmt="%d")
     print(f"Saved causal graph to: {graph_save_path}")
 
@@ -422,7 +422,7 @@ def generate_fama_french_datasets_with_shared_graph(
                 parents = np.where(G[:, j])[0]
                 influence = sum(weight * X[t - 1, p] for p in parents)
                 raw_val = decay * X[t - 1, j] + influence + np.random.normal(0, noise_std)
-                # ✅ Activation to prevent explosion
+                # Activation to prevent explosion
                 X[t, j] = np.tanh(raw_val)  # clamp to [-1, 1]
 
         X = X[1:]  # drop the first row
@@ -478,21 +478,21 @@ def remove_balanced_samples(
     labels["filepath"] = labels[id_name].apply(lambda x: os.path.join(source_dir, f"{x}.csv"))
     existing_labels = labels[labels["filepath"].apply(os.path.isfile)].copy()
 
-    print(f"📊 Found {len(existing_labels)} valid files in source directory: {source_dir}")
+    print(f"Found {len(existing_labels)} valid files in source directory: {source_dir}")
 
     # Split positives and negatives
     pos_df = existing_labels[existing_labels[label_name] == 1]
     neg_df = existing_labels[existing_labels[label_name] == 0]
 
-    print(f"📊 Current distribution — positives: {len(pos_df)}, negatives: {len(neg_df)}")
+    print(f"Current distribution — positives: {len(pos_df)}, negatives: {len(neg_df)}")
 
     # Check if enough samples are available to remove
     if len(pos_df) < num_pos_to_remove:
-        print(f"⚠️ Warning: available positives {len(pos_df)} < requested {num_pos_to_remove}")
+        print(f"Warning: available positives {len(pos_df)} < requested {num_pos_to_remove}")
         num_pos_to_remove = len(pos_df)
 
     if len(neg_df) < num_neg_to_remove:
-        print(f"⚠️ Warning: available negatives {len(neg_df)} < requested {num_neg_to_remove}")
+        print(f"Warning: available negatives {len(neg_df)} < requested {num_neg_to_remove}")
         num_neg_to_remove = len(neg_df)
 
     # Randomly select samples to remove
@@ -501,15 +501,15 @@ def remove_balanced_samples(
     if num_pos_to_remove > 0:
         pos_to_remove = pos_df.sample(n=num_pos_to_remove, random_state=random_state)
         to_remove_list.append(pos_to_remove)
-        print(f"🎯 Selected {len(pos_to_remove)} positive samples to remove")
+        print(f"Selected {len(pos_to_remove)} positive samples to remove")
 
     if num_neg_to_remove > 0:
         neg_to_remove = neg_df.sample(n=num_neg_to_remove, random_state=random_state)
         to_remove_list.append(neg_to_remove)
-        print(f"🎯 Selected {len(neg_to_remove)} negative samples to remove")
+        print(f"Selected {len(neg_to_remove)} negative samples to remove")
 
     if not to_remove_list:
-        print("ℹ️ No files to remove")
+        print("No files to remove")
         return {
             "removed_pos": 0,
             "removed_neg": 0,
@@ -525,7 +525,7 @@ def remove_balanced_samples(
     # Create backup directory (if specified)
     if backup_dir:
         os.makedirs(backup_dir, exist_ok=True)
-        print(f"📦 Created backup directory: {backup_dir}")
+        print(f"Created backup directory: {backup_dir}")
 
     # Perform deletion
     removed_files = []
@@ -547,7 +547,7 @@ def remove_balanced_samples(
             removed_files.append(src_file)
 
         except Exception as e:
-            print(f"❌ Failed to delete file: {filename}, error: {e}")
+            print(f"Failed to delete file: {filename}, error: {e}")
 
     # Stats
     removed_pos_count = len(
@@ -560,7 +560,7 @@ def remove_balanced_samples(
     remaining_neg = len(neg_df) - removed_neg_count
 
     # Output
-    print(f"\n✅ Deletion complete:")
+    print(f"\n Deletion complete:")
     print(f"   Removed positives: {removed_pos_count}")
     print(f"   Removed negatives: {removed_neg_count}")
     print(f"   Total removed: {len(removed_files)}")
@@ -588,13 +588,13 @@ def restore_from_backup(backup_dir: str, target_dir: str):
     from tqdm import tqdm
 
     if not os.path.exists(backup_dir):
-        print(f"❌ Backup directory does not exist: {backup_dir}")
+        print(f"Backup directory does not exist: {backup_dir}")
         return
 
     backup_files = [f for f in os.listdir(backup_dir) if f.endswith(".csv")]
 
     if not backup_files:
-        print(f"⚠️ No files found in backup directory: {backup_dir}")
+        print(f"No files found in backup directory: {backup_dir}")
         return
 
     os.makedirs(target_dir, exist_ok=True)
@@ -608,9 +608,9 @@ def restore_from_backup(backup_dir: str, target_dir: str):
             shutil.copy2(src, dst)
             restored_count += 1
         except Exception as e:
-            print(f"❌ Restore failed: {filename}, error: {e}")
+            print(f"Restore failed: {filename}, error: {e}")
 
-    print(f"✅ Successfully restored {restored_count} files to {target_dir}")
+    print(f"Successfully restored {restored_count} files to {target_dir}")
 
 
 def cleanup_imputed_directories(
@@ -640,7 +640,7 @@ def cleanup_imputed_directories(
 
     # Collect CSV filenames in the reference directory
     if not os.path.exists(reference_dir):
-        print(f"❌ Reference directory does not exist: {reference_dir}")
+        print(f"Reference directory does not exist: {reference_dir}")
         return {}
 
     reference_files = set()
@@ -648,10 +648,10 @@ def cleanup_imputed_directories(
         if f.endswith(".csv"):
             reference_files.add(f)
 
-    print(f"📂 Found {len(reference_files)} CSV files in reference directory: {reference_dir}")
+    print(f"Found {len(reference_files)} CSV files in reference directory: {reference_dir}")
 
     if len(reference_files) == 0:
-        print("⚠️ No CSV files in the reference directory")
+        print("No CSV files in the reference directory")
         return {}
 
     # Find all target directories to clean
@@ -665,10 +665,10 @@ def cleanup_imputed_directories(
                     target_dirs.append((method_dir, target_path))
 
     if len(target_dirs) == 0:
-        print(f"⚠️ No directories with subfolder '{subfolder}' found under {imputed_base_dir}")
+        print(f"No directories with subfolder '{subfolder}' found under {imputed_base_dir}")
         return {}
 
-    print(f"🎯 Found {len(target_dirs)} directories to clean:")
+    print(f"Found {len(target_dirs)} directories to clean:")
     for method_name, path in target_dirs:
         print(f"   - {method_name}: {path}")
 
@@ -694,7 +694,7 @@ def cleanup_imputed_directories(
                 current_files.append(f)
 
         cleanup_stats[method_name]["total_files"] = len(current_files)
-        print(f"   📊 Current file count: {len(current_files)}")
+        print(f"   Current file count: {len(current_files)}")
 
         # Determine files to delete / keep
         files_to_delete = []
@@ -710,11 +710,11 @@ def cleanup_imputed_directories(
         cleanup_stats[method_name]["deleted_files"] = len(files_to_delete)
         cleanup_stats[method_name]["deleted_list"] = files_to_delete.copy()
 
-        print(f"   ✅ Files kept: {len(files_to_keep)}")
-        print(f"   🗑️ Files to delete: {len(files_to_delete)}")
+        print(f"   Files kept: {len(files_to_keep)}")
+        print(f"   Files to delete: {len(files_to_delete)}")
 
         if len(files_to_delete) == 0:
-            print(f"   ℹ️ No cleanup needed for {method_name}")
+            print(f"  No cleanup needed for {method_name}")
             continue
 
         # Create backup directory (if needed)
@@ -722,7 +722,7 @@ def cleanup_imputed_directories(
             backup_dir = os.path.join(backup_base_dir, method_name, subfolder)
             os.makedirs(backup_dir, exist_ok=True)
             cleanup_stats[method_name]["backup_dir"] = backup_dir
-            print(f"   📦 Backup directory: {backup_dir}")
+            print(f"  Backup directory: {backup_dir}")
 
         # Perform deletion
         deleted_count = 0
@@ -743,14 +743,14 @@ def cleanup_imputed_directories(
                 deleted_count += 1
 
             except Exception as e:
-                print(f"   ❌ Failed to process file: {filename}, error: {e}")
+                print(f"   Failed to process file: {filename}, error: {e}")
 
-        print(f"   ✅ {method_name} cleanup complete: deleted {deleted_count} files")
+        print(f"  {method_name} cleanup complete: deleted {deleted_count} files")
         if backup_deleted:
-            print(f"   📦 Backed up {backup_count} files")
+            print(f"   Backed up {backup_count} files")
 
     # Overall summary
-    print(f"\n📊 Cleanup summary:")
+    print(f"\nCleanup summary:")
     total_deleted = sum(stats["deleted_files"] for stats in cleanup_stats.values())
     total_kept = sum(stats["kept_files"] for stats in cleanup_stats.values())
 
@@ -764,7 +764,7 @@ def cleanup_imputed_directories(
     return dict(cleanup_stats)
 
 
-# # ✅ Example usage 3: custom backup location
+# # Example usage 3: custom backup location
 # cleanup_stats = cleanup_imputed_directories(
 #     reference_dir="./data/downstreamIII",  # If the reference directory is this
 #     imputed_base_dir="./data_imputed",
@@ -774,9 +774,9 @@ def cleanup_imputed_directories(
 # )
 #
 # # View cleanup results
-# print("\n📋 Detailed cleanup report:")
+# print("\nDetailed cleanup report:")
 # for method, stats in cleanup_stats.items():
-#     print(f"\n🔧 {method}:")
+#     print(f"\n {method}:")
 #     print(f"   Original file count: {stats['total_files']}")
 #     print(f"   Kept files: {stats['kept_files']}")
 #     print(f"   Deleted files: {stats['deleted_files']}")

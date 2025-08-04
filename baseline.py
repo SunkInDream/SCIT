@@ -47,19 +47,19 @@ def knn_impu(mx, k=5):
     import time
     start_time = time.time()
 
-    print(f"🔍 Start KNN imputation: shape={mx.shape}, missing={np.isnan(mx).sum()}")
+    print(f"Start KNN imputation: shape={mx.shape}, missing={np.isnan(mx).sum()}")
 
     mx = mx.copy()
 
     # Set single thread
     import os
-    print("⚙️ Setting single-thread mode...")
+    print("Setting single-thread mode...")
     os.environ['OMP_NUM_THREADS'] = '1'
     os.environ['MKL_NUM_THREADS'] = '1'
     os.environ['OPENBLAS_NUM_THREADS'] = '1'
 
     # Handle all-nan columns
-    print("🔧 Checking all-NaN columns...")
+    print("Checking all-NaN columns...")
     all_nan_cols = np.all(np.isnan(mx), axis=0)
     if all_nan_cols.any():
         print(f"   Found {all_nan_cols.sum()} all-NaN columns, filling with global mean")
@@ -71,14 +71,14 @@ def knn_impu(mx, k=5):
         print("   No all-NaN columns")
 
     # Adjust k
-    print("📊 Adjusting KNN parameters...")
+    print("Adjusting KNN parameters...")
     valid_samples = (~np.isnan(mx)).sum(axis=0).min()
     original_k = k
     k = min(k, max(1, valid_samples - 1))
     print(f"   k: {original_k} -> {k}")
 
     # Start KNN imputation
-    print("🚀 Running KNN...")
+    print("Running KNN...")
     try:
         from sklearn.impute import KNNImputer
         imputer = KNNImputer(n_neighbors=k)
@@ -89,12 +89,12 @@ def knn_impu(mx, k=5):
         result = imputer.fit_transform(mx)
 
         elapsed = time.time() - start_time
-        print(f"✅ KNN imputation done in {elapsed:.2f} seconds")
+        print(f"KNN imputation done in {elapsed:.2f} seconds")
         return result
 
     except Exception as e:
         elapsed = time.time() - start_time
-        print(f"❌ KNN failed after {elapsed:.2f} seconds: {e}")
+        print(f"KNN failed after {elapsed:.2f} seconds: {e}")
         raise e
         
 
