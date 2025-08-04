@@ -10,9 +10,6 @@ To comply with submission file size restrictions, **datasets are not included** 
 
 The code for processing the MIMIC-III data is located in the `MIMIC_patients` folder.
 
-To **reproduce the exact results** reported in the paper, please download the full version of the dataset and codebase from the following link:
-
- **[Full dataset and code ([e.g., Google Drive / GitHub / Zenodo / HuggingFace link](https://anonymous.4open.science/r/SCIT-4981))]**
 
 ##  Reproduction
 
