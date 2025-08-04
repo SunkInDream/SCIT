@@ -3,9 +3,7 @@
 This repository contains the official implementation of the paper:
 
 > **"[SCIT: Learning to Impute from Causal Structures in Irregular Time Series]"**  
-> [Linna Wang, Xian Zhang, Peng Cao, Ziliang Feng, Li Lu]  
 > [AAAI], [2026]  
-> [OpenReview]
 
 ## 📌 Notice
 
