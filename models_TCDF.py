@@ -13,7 +13,7 @@ from multiprocessing import Process, Queue
 
 
 def prepare_data(file_or_array):
-    if isinstance(file_or_array, "str") or isinstance(file_or_array, str):
+    if isinstance(file_or_array, str):
         # Handle file path input
         df = pd.read_csv(file_or_array)
         data = df.values.astype(np.float32)

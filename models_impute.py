@@ -242,8 +242,30 @@ def impute(
                     pred_q = torch.quantile(pred_float, q, dim=1, keepdim=True)
                     quantile_losses.append(F.mse_loss(pred_q, y_quantiles[i]))
 
-                loss_3 = (mean_loss + std_loss + sum(quantile_losses)) / (2 + len(quantiles))
-                total_loss = 0.6 * loss_1 + 0.4 * loss_3
+                # ===== Loss ablation points (keep everything else unchanged) =====
+                # ablation == 4: w/o Lstat (only Lobs)
+                # ablation == 5: w/o Lmean
+                # ablation == 6: w/o Lstd
+                # ablation == 7: w/o Lquantile
+                if ablation == 4:
+                    total_loss = loss_1
+                else:
+                    stat_terms = []
+                    if ablation != 5:
+                        stat_terms.append(mean_loss)
+                    if ablation != 6:
+                        stat_terms.append(std_loss)
+                    if ablation != 7:
+                        stat_terms.extend(quantile_losses)
+
+                    # Avoid empty stats (shouldn't happen unless you add new modes)
+                    if len(stat_terms) == 0:
+                        loss_3 = torch.zeros_like(loss_1)
+                    else:
+                        loss_3 = sum(stat_terms) / len(stat_terms)
+
+                    total_loss = 0.6 * loss_1 + 0.4 * loss_3
+                # ===============================================================
 
             grad_scaler.scale(total_loss).backward()  #  Use grad_scaler
             grad_scaler.unscale_(opt)  #  Use grad_scaler
@@ -270,8 +292,25 @@ def impute(
                 pred_q = torch.quantile(pred_float, q, dim=1, keepdim=True)  #  use float
                 quantile_losses.append(F.mse_loss(pred_q, y_quantiles[i]))
 
-            loss_3 = (mean_loss + std_loss + sum(quantile_losses)) / (2 + len(quantiles))
-            total_loss = 0.6 * loss_1 + 0.4 * loss_3
+            # ===== Loss ablation points (keep everything else unchanged) =====
+            if ablation == 4:
+                total_loss = loss_1
+            else:
+                stat_terms = []
+                if ablation != 5:
+                    stat_terms.append(mean_loss)
+                if ablation != 6:
+                    stat_terms.append(std_loss)
+                if ablation != 7:
+                    stat_terms.extend(quantile_losses)
+
+                if len(stat_terms) == 0:
+                    loss_3 = torch.zeros_like(loss_1)
+                else:
+                    loss_3 = sum(stat_terms) / len(stat_terms)
+
+                total_loss = 0.6 * loss_1 + 0.4 * loss_3
+            # ===============================================================
 
             total_loss.backward()
             torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
@@ -309,6 +348,7 @@ def impute(
     torch.cuda.empty_cache()
     torch.cuda.ipc_collect()
     return res, mask, initial_filled_copy
+
 
 
 def impute_wrapper(args):

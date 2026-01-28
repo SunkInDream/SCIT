@@ -15,12 +15,12 @@ if __name__ == "__main__":
     mp.set_start_method("spawn", force=True)
     SEED = 42
     set_seed(SEED)
-    met = 'lorenz'
+    met = 'mimic'
     missing = 'mar'
     tag = 'FirstICU24_AKI_ALL'
 
     data_arr = Prepare_data(f'./data/{met}')
-    cg = causal_discovery(data_arr, 20, isStandard=True, standard_cg=f'./causality_matrices/{met}_causality_matrix.csv',met=met)
+    cg = causal_discovery(data_arr, 20, isStandard=False, standard_cg=f'./causality_matrices/{met}_causality_matrix.csv',met=met)
 
     # tar = pd.read_csv('./2013-03-07_dig_missing.csv')
     # res,_,_ = impute(tar,cg,model_params,gpu_id=0)
@@ -30,7 +30,7 @@ if __name__ == "__main__":
     # res = evaluate_causal_discovery_from_file('./causality_matrices/my_lorenz_causality_matrix.csv', './causality_matrices/lorenz_causality_matrix.csv')
     # print(res)
 
-    # res = parallel_impute('./data/downstreamIII', cg, model_params, epochs=100, lr=0.02, output_dir='./data_imputed/my_model/III', skip_existing=True)
+    res = parallel_impute('./data/downstreamIII', cg, model_params, epochs=100, lr=0.02, output_dir='./data_imputed/my_model/III', skip_existing=True)
     parallel_mse_evaluate(data_arr, cg, met=met, missing=missing, seed=SEED, ablation=0)
 
     # data_arr1, label_arr1 = Prepare_data('./data/downstreamIII', './AAAI_3_4_labels.csv', 'ICUSTAY_ID', tag)
