@@ -18,6 +18,8 @@ To **reproduce the exact results** reported in the paper, please download the fu
 
 Once the data is downloaded and placed in the correct directory structure, you can run the experiments using:
 
+## hyperparameter configurations
+
 The detailed hyperparameter configurations used in all experiments are provided in "./Appendix_Hyperparameters.pdf".
 
 ```bash
