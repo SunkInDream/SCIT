@@ -15,6 +15,9 @@ We evaluate SCIT on several datasets from diverse domains, comparing its perform
 - **Self-supervised learning**: Reduces dependency on ground truth labels during training.
 - **Scalable framework**: Efficient for large datasets, such as those found in healthcare and finance.
 
+## Appendix
+Hyperparameters used in experiments is in Appendix__Hyperparameters.pdf
+
 ## Datasets
 SCIT is evaluated on five popular datasets from various domains:
 1. **Lorenz-96**: Synthetic dataset based on a nonlinear climate model.
