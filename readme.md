@@ -1,4 +1,4 @@
-# SCIT: Causally Consistent Imputation for Multivariate Time Series
+# SCIT: Learning Causal-Consistent Imputation for Multivariate Time Series
 
 ## Overview
 
